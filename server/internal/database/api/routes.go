@@ -19,18 +19,27 @@ func NewRouter(itemRepositorysitory *repository.ItemRepository) *Router {
 func (r *Router) StartRouting() {
 	engine := gin.Default()
 	r.routeItems(engine)
-	engine.Run()
+	engine.Run("localhost:8081")
 }
 
 func (r *Router) routeItems(engine *gin.Engine) {
-	engine.GET("/items", r.handleGetItems)
-	engine.POST("/items", r.handlePostItems)
-	engine.GET("/items/:guid", r.handleGetItem)
-	engine.DELETE("/items/:guid", r.handleDeleteItem)
-	engine.PUT("/items", r.handleUpdateItem)
+	engine.GET("/items", r.handleGetAll)
+	engine.POST("/items", r.handleCreate)
+	engine.GET("/items/:guid", r.handleGetByGuid)
+	engine.DELETE("/items/:guid", r.handleDelete)
+	engine.PUT("/items", r.handleUpdate)
 }
 
-func (r *Router) handleGetItems(c *gin.Context) {
+func setupCors(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+}
+
+func (r *Router) handleGetAll(c *gin.Context) {
+	setupCors(c)
+
 	items, err := r.ItemRepository.GetAll()
 	if err != nil {
 		c.JSON(500, err)
@@ -39,7 +48,9 @@ func (r *Router) handleGetItems(c *gin.Context) {
 	c.JSON(200, items)
 }
 
-func (r *Router) handleGetItem(c *gin.Context) {
+func (r *Router) handleGetByGuid(c *gin.Context) {
+	setupCors(c)
+
 	guid := c.Param("guid")
 	item, err := r.ItemRepository.Get(guid)
 	if err != nil {
@@ -49,7 +60,9 @@ func (r *Router) handleGetItem(c *gin.Context) {
 	c.JSON(200, item)
 }
 
-func (r *Router) handlePostItems(c *gin.Context) {
+func (r *Router) handleCreate(c *gin.Context) {
+	setupCors(c)
+
 	var item entity.Item
 	err := c.BindJSON(&item)
 	if err != nil {
@@ -72,7 +85,9 @@ func (r *Router) handlePostItems(c *gin.Context) {
 	c.JSON(200, item)
 }
 
-func (r *Router) handleDeleteItem(c *gin.Context) {
+func (r *Router) handleDelete(c *gin.Context) {
+	setupCors(c)
+
 	guid := c.Param("guid")
 	err := r.ItemRepository.Delete(guid)
 	if err != nil {
@@ -82,7 +97,9 @@ func (r *Router) handleDeleteItem(c *gin.Context) {
 	c.JSON(200, nil)
 }
 
-func (r *Router) handleUpdateItem(c *gin.Context) {
+func (r *Router) handleUpdate(c *gin.Context) {
+	setupCors(c)
+
 	var item entity.Item
 	err := c.BindJSON(&item)
 	if err != nil {
